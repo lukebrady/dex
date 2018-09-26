@@ -94,28 +94,28 @@ func (i *InvertedIndex) SearchByKey(key string) error {
 	if i.index[key] != nil {
 		// Assign the root value to the first value node.
 		place := i.index[key]
-		for place != nil {
-			document, err := ioutil.ReadFile(place.value)
-			if err != nil {
-				return err
-			}
-			str := strings.Split(string(document), " ")
-			// Create a color print function.
-			cyan := color.New(color.FgCyan).PrintfFunc()
-			// Print out the document where the word was found.
-			fmt.Printf("\"%s\" found in %s.\n", key, place.value)
-			// After Reading in the document, print to STDOUT.
-			for _, keyword := range str {
-				// If the keyword matches the key, print the word out.
-				if key == keyword {
-					cyan(" %s ", keyword)
-				} else {
-					fmt.Printf(" %s ", keyword)
-				}
-			}
-			fmt.Println()
-			place = place.next
+
+		document, err := ioutil.ReadFile(place.value)
+		if err != nil {
+			return err
 		}
+		str := strings.Split(string(document), " ")
+		// Create a color print function.
+		cyan := color.New(color.FgCyan).PrintfFunc()
+		// Print out the document where the word was found.
+		fmt.Printf("\"%s\" found in %s.\n", key, place.value)
+		// After Reading in the document, print to STDOUT.
+		for _, keyword := range str {
+			// If the keyword matches the key, print the word out.
+			if key == keyword {
+				cyan("%s ", keyword)
+			} else {
+				fmt.Printf("%s ", keyword)
+			}
+		}
+		fmt.Println()
+		place = place.next
+
 		// Increase size of the total inverse index.
 		i.size++
 	} else {
