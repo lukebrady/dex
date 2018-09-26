@@ -142,13 +142,3 @@ func (i *InvertedIndex) PrintByKey(key string) {
 		fmt.Println("This key has no entries in the index.")
 	}
 }
-
-func main() {
-	color.Cyan(" Go Search - Search through indexed documents")
-	color.Cyan("----------------------------------------------")
-	i := NewIndex()
-	i.IndexFile("./kayla.txt")
-	i.SearchByKey("Kayla")
-	i.SearchByKey("is")
-	i.SearchByKey("the")
-}
