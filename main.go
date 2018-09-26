@@ -18,10 +18,12 @@ func main() {
 		fmt.Println("Not enough commands supplied.")
 		return
 	}
-	path := flag.String("path", "default", "Index a file to search later.")
+	path := flag.String("path", "test.txt", "Index a file to search later.")
+	key := flag.String("key", "default", "The word that you are searching for.")
 	flag.Parse()
 	// Now check to see what type of command has been supplied to gosearch.
-	if os.Args[1] == INDEX {
-		cmd.IndexCMD(*path)
+	cmd.IndexCMD(*path)
+	if *key != "" {
+		cmd.SearchCMD(*key)
 	}
 }

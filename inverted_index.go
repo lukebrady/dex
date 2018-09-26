@@ -90,14 +90,14 @@ func (i *InvertedIndex) IndexFile(file string) error {
 
 // SearchByKey searches all indexed documents for the provided key and prints where
 // the word occurs within that document.
-func (i *InvertedIndex) SearchByKey(key string) {
+func (i *InvertedIndex) SearchByKey(key string) error {
 	if i.index[key] != nil {
 		// Assign the root value to the first value node.
 		place := i.index[key]
 		for place != nil {
 			document, err := ioutil.ReadFile(place.value)
 			if err != nil {
-				println(err)
+				return err
 			}
 			str := strings.Split(string(document), " ")
 			// Create a color print function.
@@ -121,6 +121,7 @@ func (i *InvertedIndex) SearchByKey(key string) {
 	} else {
 		fmt.Println("This key has no entries in the index.")
 	}
+	return nil
 }
 
 // PrintIndex prints the given key's index.

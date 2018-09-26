@@ -20,5 +20,12 @@ func (cmd *GoSearchCMD) IndexCMD(path string) {
 	if err != nil {
 		panic(err)
 	}
-	cmd.Index.SearchByKey("hello")
+}
+
+// SearchCMD will search for the supplied token or tokens in a group of words.
+func (cmd *GoSearchCMD) SearchCMD(key string) {
+	err := cmd.Index.SearchByKey(key)
+	if err != nil {
+		println(err)
+	}
 }
