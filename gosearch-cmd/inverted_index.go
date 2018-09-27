@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"io/ioutil"
 	"regexp"
@@ -20,9 +22,9 @@ type InvertedIndex struct {
 
 // ValueNode struct
 type ValueNode struct {
-	value string
-	index int
-	next  *ValueNode
+	Value string
+	Index int
+	Next  *ValueNode
 }
 
 // NewIndex returns a pointer to an Inverted Index object.
@@ -37,16 +39,16 @@ func NewIndex() *InvertedIndex {
 }
 
 // IndexFile reads a file and indexes it.
-func (i *InvertedIndex) IndexFile(file string) error {
+func (i *InvertedIndex) IndexFile(file string) (map[string]*ValueNode, error) {
 	// Read the given file into memory. This should be changed in the future.
 	fopen, err := ioutil.ReadFile(file)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// Create a Regex object that can match punctuation within a file's text.
 	re, err := regexp.Compile("[.,?]")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// Remove all punctuation from the file.
 	premove := re.ReplaceAllString(string(fopen), " ")
@@ -59,9 +61,9 @@ func (i *InvertedIndex) IndexFile(file string) error {
 	for index, word := range str {
 		if i.index[word] == nil {
 			val := &ValueNode{
-				value: file,
-				index: index,
-				next:  nil,
+				Value: file,
+				Index: index,
+				Next:  nil,
 			}
 			i.index[word] = val
 			// Increase the size count of the index.
@@ -69,58 +71,67 @@ func (i *InvertedIndex) IndexFile(file string) error {
 		} else {
 			// Create the value node that will be inserted into the chain.
 			val := &ValueNode{
-				value: file,
-				next:  nil,
+				Value: file,
+				Next:  nil,
 			}
 			// Assign the root value to the first value node.
 			place := i.index[word]
-			for place.next != nil {
-				place = place.next
+			for place.Next != nil {
+				place = place.Next
 			}
 			// Place the value node when .next == nil.
-			place.next = val
+			place.Next = val
 			// Increase size of the total inverse index.
 			i.size++
 		}
 	}
 	i.mutex.Unlock()
 	// Return nil if no error occurs.
-	return nil
+	return i.index, nil
+}
+
+// DecodeIndex is a helper function that decodes the written index to be searched.
+func DecodeIndex() []byte {
+	reader := &bytes.Buffer{}
+	// Read the index file and then decode the index.
+	index, err := ioutil.ReadFile("gosearch-cmd/tmp/index.gob")
+	if err != nil {
+		panic(err)
+	}
+	decoder := gob.NewDecoder(reader)
+	if err = decoder.Decode(&index); err != nil {
+		panic(err)
+	}
+	return reader.Bytes()
 }
 
 // SearchByKey searches all indexed documents for the provided key and prints where
 // the word occurs within that document.
 func (i *InvertedIndex) SearchByKey(key string) error {
-	if i.index[key] != nil {
-		// Assign the root value to the first value node.
-		place := i.index[key]
-
-		document, err := ioutil.ReadFile(place.value)
-		if err != nil {
-			return err
+	// Assign the root value to the first value node.
+	place := i.index[key]
+	indexChan := DecodeIndex()
+	str := strings.Split(string(indexChan), " ")
+	// Create a color print function.
+	cyan := color.New(color.FgCyan).PrintfFunc()
+	// Print out the document where the word was found.
+	fmt.Printf("\"%s\" found in %s.\n", key, place.Value)
+	// After Reading in the document, print to STDOUT.
+	for _, keyword := range str {
+		// If the keyword matches the key, print the word out.
+		if key == keyword {
+			cyan("%s ", keyword)
+		} else {
+			fmt.Printf("%s ", keyword)
 		}
-		str := strings.Split(string(document), " ")
-		// Create a color print function.
-		cyan := color.New(color.FgCyan).PrintfFunc()
-		// Print out the document where the word was found.
-		fmt.Printf("\"%s\" found in %s.\n", key, place.value)
-		// After Reading in the document, print to STDOUT.
-		for _, keyword := range str {
-			// If the keyword matches the key, print the word out.
-			if key == keyword {
-				cyan("%s ", keyword)
-			} else {
-				fmt.Printf("%s ", keyword)
-			}
-		}
-		fmt.Println()
-		place = place.next
-
-		// Increase size of the total inverse index.
-		i.size++
-	} else {
-		fmt.Println("This key has no entries in the index.")
 	}
+	fmt.Println()
+	place = place.Next
+
+	// Increase size of the total inverse index.
+
+	fmt.Println("This key has no entries in the index.")
+
 	return nil
 }
 
@@ -136,8 +147,8 @@ func (i *InvertedIndex) PrintByKey(key string) {
 	if i.index[key] != nil {
 		place := i.index[key]
 		for place != nil {
-			fmt.Printf("%s\n", place.value)
-			place = place.next
+			fmt.Printf("%s\n", place.Value)
+			place = place.Next
 		}
 	} else {
 		fmt.Println("This key has no entries in the index.")
