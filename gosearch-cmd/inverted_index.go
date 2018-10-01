@@ -91,7 +91,7 @@ func (i *InvertedIndex) IndexFile(file string) (map[string]*ValueNode, error) {
 }
 
 // DecodeIndex is a helper function that decodes the written index to be searched.
-func DecodeIndex() []byte {
+func DecodeIndex(decodedIndex chan []byte) {
 	reader := &bytes.Buffer{}
 	// Read the index file and then decode the index.
 	index, err := ioutil.ReadFile("gosearch-cmd/tmp/index.gob")
@@ -99,39 +99,45 @@ func DecodeIndex() []byte {
 		panic(err)
 	}
 	decoder := gob.NewDecoder(reader)
-	if err = decoder.Decode(&index); err != nil {
+	if err = decoder.Decode(index); err != nil {
 		panic(err)
 	}
-	return reader.Bytes()
+	decodedIndex <- reader.Bytes()
 }
 
 // SearchByKey searches all indexed documents for the provided key and prints where
 // the word occurs within that document.
 func (i *InvertedIndex) SearchByKey(key string) error {
-	// Assign the root value to the first value node.
-	place := i.index[key]
-	indexChan := DecodeIndex()
-	str := strings.Split(string(indexChan), " ")
-	// Create a color print function.
-	cyan := color.New(color.FgCyan).PrintfFunc()
-	// Print out the document where the word was found.
-	fmt.Printf("\"%s\" found in %s.\n", key, place.Value)
-	// After Reading in the document, print to STDOUT.
-	for _, keyword := range str {
-		// If the keyword matches the key, print the word out.
-		if key == keyword {
-			cyan("%s ", keyword)
-		} else {
-			fmt.Printf("%s ", keyword)
+	if i.index[key] != nil {
+		// Assign the root value to the first value node.
+		place := i.index[key]
+
+		document, err := ioutil.ReadFile(place.Value)
+		if err != nil {
+			return err
 		}
+		str := strings.Split(string(document), " ")
+		// Create a color print function.
+		cyan := color.New(color.FgCyan).PrintfFunc()
+		// Print out the document where the word was found.
+		fmt.Printf("\"%s\" found in %s.\n", key, place.Value)
+		// After Reading in the document, print to STDOUT.
+		for _, keyword := range str {
+			// If the keyword matches the key, print the word out.
+			if key == keyword {
+				cyan("%s ", keyword)
+			} else {
+				fmt.Printf("%s ", keyword)
+			}
+		}
+		fmt.Println()
+		place = place.Next
+
+		// Increase size of the total inverse index.
+		i.size++
+	} else {
+		fmt.Println("This key has no entries in the index.")
 	}
-	fmt.Println()
-	place = place.Next
-
-	// Increase size of the total inverse index.
-
-	fmt.Println("This key has no entries in the index.")
-
 	return nil
 }
 
