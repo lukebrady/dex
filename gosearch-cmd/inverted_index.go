@@ -116,10 +116,15 @@ func (i *InvertedIndex) SearchByKey(key string) error {
 		cyan := color.New(color.FgCyan).PrintfFunc()
 		// Print out the document where the word was found.
 		fmt.Printf("\"%s\" found in %s.\n", key, place.Value)
+		// Create the regular expressions.
+		keyReg, err := regexp.Compile(key)
+		if err != nil {
+			return err
+		}
 		// After Reading in the document, print to STDOUT.
 		for _, keyword := range str {
 			// If the keyword matches the key, print the word out.
-			if key == keyword {
+			if keyReg.MatchString(keyword) {
 				cyan("%s ", keyword)
 			} else {
 				fmt.Printf("%s ", keyword)
