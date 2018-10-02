@@ -1,23 +1,21 @@
 package main
 
 import (
-	"bytes"
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/fatih/color"
 )
 
 // InvertedIndex struct
 type InvertedIndex struct {
-	index map[string]*ValueNode
-	mutex *sync.Mutex
-	size  uint
+	Index map[string]*ValueNode
+	Size  uint
 }
 
 // ValueNode struct
@@ -32,9 +30,8 @@ func NewIndex() *InvertedIndex {
 	// Make a new map that can be given to the InvertedIndex.
 	ind := make(map[string]*ValueNode)
 	return &InvertedIndex{
-		index: ind,
-		mutex: &sync.Mutex{},
-		size:  0,
+		Index: ind,
+		Size:  0,
 	}
 }
 
@@ -57,17 +54,16 @@ func (i *InvertedIndex) IndexFile(file string) (map[string]*ValueNode, error) {
 	// Now sort all of the words within the file.
 	sort.Strings(str)
 	// Enter all of the values found in the file into the index.
-	i.mutex.Lock()
 	for index, word := range str {
-		if i.index[word] == nil {
+		if i.Index[word] == nil {
 			val := &ValueNode{
 				Value: file,
 				Index: index,
 				Next:  nil,
 			}
-			i.index[word] = val
+			i.Index[word] = val
 			// Increase the size count of the index.
-			i.size++
+			i.Size++
 		} else {
 			// Create the value node that will be inserted into the chain.
 			val := &ValueNode{
@@ -75,43 +71,42 @@ func (i *InvertedIndex) IndexFile(file string) (map[string]*ValueNode, error) {
 				Next:  nil,
 			}
 			// Assign the root value to the first value node.
-			place := i.index[word]
+			place := i.Index[word]
 			for place.Next != nil {
 				place = place.Next
 			}
 			// Place the value node when .next == nil.
 			place.Next = val
 			// Increase size of the total inverse index.
-			i.size++
+			i.Size++
 		}
 	}
-	i.mutex.Unlock()
 	// Return nil if no error occurs.
-	return i.index, nil
+	return i.Index, nil
 }
 
 // DecodeIndex is a helper function that decodes the written index to be searched.
-func DecodeIndex(decodedIndex chan []byte) {
-	reader := &bytes.Buffer{}
+func DecodeIndex() *InvertedIndex {
 	// Read the index file and then decode the index.
-	index, err := ioutil.ReadFile("gosearch-cmd/tmp/index.gob")
+	index, err := os.Open("gosearch-cmd/tmp/index.gob")
 	if err != nil {
 		panic(err)
 	}
-	decoder := gob.NewDecoder(reader)
-	if err = decoder.Decode(index); err != nil {
+	decoder := gob.NewDecoder(index)
+	inf := &InvertedIndex{}
+	if err = decoder.Decode(inf); err != nil {
 		panic(err)
 	}
-	decodedIndex <- reader.Bytes()
+	return inf
 }
 
 // SearchByKey searches all indexed documents for the provided key and prints where
 // the word occurs within that document.
 func (i *InvertedIndex) SearchByKey(key string) error {
-	if i.index[key] != nil {
+	index := DecodeIndex()
+	if index.Index[key] != nil {
 		// Assign the root value to the first value node.
-		place := i.index[key]
-
+		place := index.Index[key]
 		document, err := ioutil.ReadFile(place.Value)
 		if err != nil {
 			return err
@@ -134,7 +129,7 @@ func (i *InvertedIndex) SearchByKey(key string) error {
 		place = place.Next
 
 		// Increase size of the total inverse index.
-		i.size++
+		i.Size++
 	} else {
 		fmt.Println("This key has no entries in the index.")
 	}
@@ -144,14 +139,14 @@ func (i *InvertedIndex) SearchByKey(key string) error {
 // PrintIndex prints the given key's index.
 func (i *InvertedIndex) PrintIndex() {
 	// Print the entire index. Will only print keys and ValueNode address.
-	fmt.Println(i.index)
+	fmt.Println(i.Index)
 }
 
 // PrintByKey prints a key's entire chain.
 func (i *InvertedIndex) PrintByKey(key string) {
 	fmt.Printf("%s:\n", key)
-	if i.index[key] != nil {
-		place := i.index[key]
+	if i.Index[key] != nil {
+		place := i.Index[key]
 		for place != nil {
 			fmt.Printf("%s\n", place.Value)
 			place = place.Next
