@@ -1,2 +1,5 @@
-# gosearch
-An inverted index implemented in Go.
+# GoSearch
+
+An inverted index for your filesystem.</br>
+
+# GoSearch is still being developed and has limited functionality!
