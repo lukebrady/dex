@@ -56,7 +56,6 @@ func (i *InvertedIndex) IndexFile(file string) (map[string]*ValueNode, error) {
 	// Enter all of the values found in the file into the index.
 	for index, word := range str {
 		if i.Index[word] == nil {
-			println(word)
 			val := &ValueNode{
 				Value: file,
 				Index: index,
