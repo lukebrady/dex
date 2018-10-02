@@ -40,7 +40,8 @@ func (cmd *GoSearchCMD) IndexCMD(path string) {
 	// Now serialize the new index to disk so that it can be used later to search.
 	go EncodeMap(cmd.Index, byteChan)
 	// Now write to disk.
-	indexFile, err := os.OpenFile("gosearch-cmd/tmp/index.gob", os.O_CREATE|os.O_RDWR, 0666)
+	writePath := "gosearch-cmd/tmp/" + path + ".gob"
+	indexFile, err := os.OpenFile(writePath, os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		panic(err)
 	}

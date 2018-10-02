@@ -48,7 +48,7 @@ func (i *InvertedIndex) IndexFile(file string) (map[string]*ValueNode, error) {
 		return nil, err
 	}
 	// Remove all punctuation from the file.
-	premove := re.ReplaceAllString(string(fopen), " ")
+	premove := re.ReplaceAllString(string(fopen), "")
 	// Split all of the strings within the file.
 	str := strings.Split(premove, " ")
 	// Now sort all of the words within the file.
@@ -56,6 +56,7 @@ func (i *InvertedIndex) IndexFile(file string) (map[string]*ValueNode, error) {
 	// Enter all of the values found in the file into the index.
 	for index, word := range str {
 		if i.Index[word] == nil {
+			println(word)
 			val := &ValueNode{
 				Value: file,
 				Index: index,
@@ -86,9 +87,9 @@ func (i *InvertedIndex) IndexFile(file string) (map[string]*ValueNode, error) {
 }
 
 // DecodeIndex is a helper function that decodes the written index to be searched.
-func DecodeIndex() *InvertedIndex {
+func DecodeIndex(file string) *InvertedIndex {
 	// Read the index file and then decode the index.
-	index, err := os.Open("gosearch-cmd/tmp/index.gob")
+	index, err := os.Open(file)
 	if err != nil {
 		panic(err)
 	}
@@ -100,43 +101,68 @@ func DecodeIndex() *InvertedIndex {
 	return inf
 }
 
+// GetIndices returns a list of index files that will be read and searched through.
+func GetIndices() ([]os.FileInfo, error) {
+	// Get the list of index files within the tmp directory.
+	files, err := ioutil.ReadDir("gosearch-cmd/tmp/")
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
 // SearchByKey searches all indexed documents for the provided key and prints where
 // the word occurs within that document.
 func (i *InvertedIndex) SearchByKey(key string) error {
-	index := DecodeIndex()
-	if index.Index[key] != nil {
-		// Assign the root value to the first value node.
-		place := index.Index[key]
-		document, err := ioutil.ReadFile(place.Value)
-		if err != nil {
-			return err
-		}
-		str := strings.Split(string(document), " ")
-		// Create a color print function.
-		cyan := color.New(color.FgCyan).PrintfFunc()
-		// Print out the document where the word was found.
-		fmt.Printf("\"%s\" found in %s.\n", key, place.Value)
-		// Create the regular expressions.
-		keyReg, err := regexp.Compile(key)
-		if err != nil {
-			return err
-		}
-		// After Reading in the document, print to STDOUT.
-		for _, keyword := range str {
-			// If the keyword matches the key, print the word out.
-			if keyReg.MatchString(keyword) {
-				cyan("%s ", keyword)
+	conf := NewConfigurationObject()
+	files, err := GetIndices()
+	if err != nil {
+		return err
+	}
+	if len(files) > 0 {
+		for _, file := range files {
+			index := DecodeIndex("gosearch-cmd/tmp/" + file.Name())
+			if index.Index[key] != nil {
+				// Assign the root value to the first value node.
+				place := index.Index[key]
+				document, err := ioutil.ReadFile(place.Value)
+				if err != nil {
+					return err
+				}
+				str := strings.Split(string(document), " ")
+				// Create a color print function.
+				cyan := color.New(conf.GetColor()).PrintfFunc()
+				// Print out the document where the word was found.
+				fmt.Printf("\"%s\" found in %s.\n", key, place.Value)
+				// Create the regular expressions.
+				keyReg, err := regexp.Compile(key)
+				if err != nil {
+					return err
+				}
+				// After Reading in the document, print to STDOUT.
+				for _, keyword := range str {
+					// If the keyword matches the key, print the word out.
+					if keyReg.MatchString(keyword) {
+						cyan("%s ", keyword)
+					} else {
+						fmt.Printf("%s ", keyword)
+					}
+				}
+				if len(files) > 1 {
+					fmt.Printf("\n\n")
+				} else {
+					fmt.Println()
+				}
+				place = place.Next
+
+				// Increase size of the total inverse index.
+				i.Size++
 			} else {
-				fmt.Printf("%s ", keyword)
+				fmt.Println("This key has no entries in the index.")
 			}
 		}
-		fmt.Println()
-		place = place.Next
-
-		// Increase size of the total inverse index.
-		i.Size++
 	} else {
-		fmt.Println("This key has no entries in the index.")
+		fmt.Printf("A file has not been indexed.\nIndex a file by running gosearch -index <file>\n")
 	}
 	return nil
 }
