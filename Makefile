@@ -1,2 +1,2 @@
 build:
-	go build -o gosearch-cmd/bin/gosearch ./gosearch-cmd/
+	go build -o dex/bin/dex ./dex/
