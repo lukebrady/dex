@@ -156,8 +156,6 @@ func (i *InvertedIndex) SearchByKey(key string) error {
 
 				// Increase size of the total inverse index.
 				i.Size++
-			} else {
-				fmt.Println("This key has no entries in the index.")
 			}
 		}
 	} else {
