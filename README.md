@@ -1,17 +1,17 @@
-# GoSearch
+# Dex
 
 A search engine for your filesystem.
 
 ## Usage
 
 ``` bash
-gosearch -index test.txt
-gosearch -search hello
+dex -index test.txt
+dex -search hello
 ```
 
 ## Disclaimer
 
-GoSearch is still under development and has limited functionality. If you are interested in contributing to the project make a pull request!
+Dex is still under development and has limited functionality. If you are interested in contributing to the project make a pull request!
 
 ## Credits
 
