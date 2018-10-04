@@ -15,7 +15,7 @@ type SearchConfiguration struct {
 // NewConfigurationObject returns a config object that will be used to tune gosearch.
 func NewConfigurationObject() *SearchConfiguration {
 	// Read the in the binary data from the config file.
-	jsonConf, err := ioutil.ReadFile("gosearch-cmd/config/gosearch.conf")
+	jsonConf, err := ioutil.ReadFile("dex/config/gosearch.conf")
 	if err != nil {
 		panic(err)
 	}

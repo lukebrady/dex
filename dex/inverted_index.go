@@ -103,7 +103,7 @@ func DecodeIndex(file string) *InvertedIndex {
 // GetIndices returns a list of index files that will be read and searched through.
 func GetIndices() ([]os.FileInfo, error) {
 	// Get the list of index files within the tmp directory.
-	files, err := ioutil.ReadDir("gosearch-cmd/tmp/")
+	files, err := ioutil.ReadDir("dex/tmp/")
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (i *InvertedIndex) SearchByKey(key string) error {
 	}
 	if len(files) > 0 {
 		for _, file := range files {
-			index := DecodeIndex("gosearch-cmd/tmp/" + file.Name())
+			index := DecodeIndex("dex/tmp/" + file.Name())
 			if index.Index[key] != nil {
 				// Assign the root value to the first value node.
 				place := index.Index[key]
