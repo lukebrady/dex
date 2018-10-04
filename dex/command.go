@@ -69,7 +69,7 @@ func (cmd *GoSearchCMD) FileCMD(path string) {
 		// Get the filename from the filepath.
 		fileName := filepath.Base(file)
 		// Now run the cmd.Index.IndexFile(path) function to index the file path supplied to the command.
-		cmd.Index.IndexFile(path)
+		cmd.Index.IndexFile(file)
 		// Make the channel to retrieve encoded data.
 		byteChan := make(chan []byte)
 		// Now serialize the new index to disk so that it can be used later to search.
