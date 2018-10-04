@@ -60,3 +60,27 @@ func (cmd *GoSearchCMD) SearchCMD(key string) {
 		println(err)
 	}
 }
+
+// FileCMD will index all of the files within a supplied configuration file.
+func (cmd *GoSearchCMD) FileCMD(path string) {
+	// Get the index supplied index configuration.
+	indexConf := NewIndexConfigurationObject(path)
+	for _, file := range indexConf.IndexFiles {
+		// Get the filename from the filepath.
+		fileName := filepath.Base(file)
+		// Now run the cmd.Index.IndexFile(path) function to index the file path supplied to the command.
+		cmd.Index.IndexFile(path)
+		// Make the channel to retrieve encoded data.
+		byteChan := make(chan []byte)
+		// Now serialize the new index to disk so that it can be used later to search.
+		go EncodeMap(cmd.Index, byteChan)
+		// Now write to disk.
+		writePath := "dex/tmp/" + fileName + ".gob"
+		indexFile, err := os.OpenFile(writePath, os.O_CREATE|os.O_RDWR, 0666)
+		if err != nil {
+			panic(err)
+		}
+		defer indexFile.Close()
+		_, err = indexFile.Write(<-byteChan)
+	}
+}

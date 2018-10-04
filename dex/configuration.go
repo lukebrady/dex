@@ -28,6 +28,22 @@ func NewConfigurationObject() *SearchConfiguration {
 	return conf
 }
 
+// NewIndexConfigurationObject returns a config object that will be used to tune gosearch.
+func NewIndexConfigurationObject(path string) *IndexFile {
+	// Read the in the binary data from the config file.
+	jsonConf, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	conf := &IndexFile{}
+	// Now unmarshal the JSON to the SearchConfiguration object.
+	if err := json.Unmarshal(jsonConf, conf); err != nil {
+		panic(err)
+	}
+	// Return the configuration object.
+	return conf
+}
+
 // GetColor takes the color data from the gosearch.conf file and translates it into a color
 // that can be used by the program to determine FGColor.
 func (s *SearchConfiguration) GetColor() color.Attribute {
