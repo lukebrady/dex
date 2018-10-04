@@ -12,19 +12,6 @@ import (
 	"github.com/fatih/color"
 )
 
-// InvertedIndex struct
-type InvertedIndex struct {
-	Index map[string]*ValueNode
-	Size  uint
-}
-
-// ValueNode struct
-type ValueNode struct {
-	Value string
-	Index int
-	Next  *ValueNode
-}
-
 // NewIndex returns a pointer to an Inverted Index object.
 func NewIndex() *InvertedIndex {
 	// Make a new map that can be given to the InvertedIndex.

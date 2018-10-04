@@ -7,11 +7,6 @@ import (
 	"github.com/fatih/color"
 )
 
-// SearchConfiguration is an object that will be used to tune the gosearch program.
-type SearchConfiguration struct {
-	OutputColor string `json:"OutputColor"`
-}
-
 // NewConfigurationObject returns a config object that will be used to tune gosearch.
 func NewConfigurationObject() *SearchConfiguration {
 	// Read the in the binary data from the config file.
