@@ -24,6 +24,6 @@ func main() {
 	} else if *file != "default" {
 		cmd.FileCMD(*file)
 	} else {
-		fmt.Printf("Incorrect use of the gosearch tool.")
+		fmt.Printf("Incorrect use of the gosearch tool.\n")
 	}
 }
